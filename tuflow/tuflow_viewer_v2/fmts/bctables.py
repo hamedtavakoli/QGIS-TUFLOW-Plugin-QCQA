@@ -112,6 +112,11 @@ class BCTablesCheck(BCTablesCheckBase, TimeSeriesMixin):
         self._load_objs()
         self._loaded = True
 
+    def ids(self, filter_by: str = None, internal_id: bool = False) -> list[str]:
+        if not self._loaded:
+            self._complete_load()
+        return super().ids(filter_by, internal_id=True)
+
     def data_types(self, filter_by: str = None, bndry_type: bool = True) -> list[str]:
         if not self._loaded:
             if filter_by not in ['timeseries', 'line', 'point', 'polygon', 'timeseries/line', 'timeseries/point', 'timeseries/polygon', None]:

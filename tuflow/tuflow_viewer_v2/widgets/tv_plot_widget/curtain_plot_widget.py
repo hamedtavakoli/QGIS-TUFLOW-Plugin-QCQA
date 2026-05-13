@@ -285,13 +285,24 @@ class CurtainPlotWidget(TVPlotWidget, CurtainPlotHelperMixin):
 
         idx, idxs = None, []
 
-        if self._time_updated:  # if time updated then try and match ids exactly
-            idxs = [i for i, x in enumerate(for_overwrite) if x.id == src_item.id]
+        # if self._time_updated:  # if time updated then try and match ids exactly
+        idxs = [i for i, x in enumerate(for_overwrite) if x.id == src_item.id and x.geom == src_item.geom]
 
         if not idxs:  # try and match id but ignore the ID and match the data type and result name
             idxs = [i for i, x in enumerate(for_overwrite) if src_item.fuzzy_match(x) if not x.id.endswith('.vector')]
             if not idxs:  # just grab the first one that isn't pipes or pits
-                idxs = [i for i, x in enumerate(for_overwrite) if not x.id.endswith('.vector')]
+                if not colours_retained and src_item.sel_type != 'drawn':  # grab the first that is not pipes or pits
+                    idxs = [i for i, x in enumerate(for_overwrite) if not x.id.endswith('.vector')]
+                else:
+                    # we need to retain the same colour for the same geometry
+                    colours = [v for k, v in colours_retained.items() if k.geom == src_item.geom]
+                    if colours:
+                        avail = [x for x in for_overwrite if x.colour in colours]
+                    else:
+                        avail = [x for x in for_overwrite if x.colour not in list(colours_retained.values())]
+                    idxs = [i for i, x in enumerate(avail) if not x.id.endswith('.vector')]
+                    if not idxs:
+                        return False
 
         idx = idxs[0] if idxs else None
         if idx is None:

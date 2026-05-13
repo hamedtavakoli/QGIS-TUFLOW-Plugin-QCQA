@@ -53,7 +53,7 @@ class SectionPlotWidget(TVPlotWidget, SectionPlotHelperMixin):
         profiler = Profiler()
         profiler('Section Plot Total Time')
 
-        colours_retained = set()
+        colours_retained = {}
         time = self.qgis_current_time()
         for src_item in for_adding:
             for src_item_filled in self._populate_plot_data(src_item, time):
@@ -119,19 +119,30 @@ class SectionPlotWidget(TVPlotWidget, SectionPlotHelperMixin):
         profiler('Section Plot Total Time')
         profiler.report()
 
-    def _overwrite_existing_plot_item(self, src_item: PlotSourceItem, for_overwrite: list[PlotSourceItem], colours_retained: set) -> bool:
+    def _overwrite_existing_plot_item(self, src_item: PlotSourceItem, for_overwrite: list[PlotSourceItem], colours_retained: dict) -> bool:
         if not for_overwrite:
             return False
 
         idx, idxs = None, []
 
-        if self._time_updated:  # if time updated then try and match ids exactly
-            idxs = [i for i, x in enumerate(for_overwrite) if x.id == src_item.id]
+        # if self._time_updated:  # if time updated then try and match ids exactly
+        idxs = [i for i, x in enumerate(for_overwrite) if x.id == src_item.id and x.geom == src_item.geom]
 
         if not idxs:  # try and match id but ignore the ID and match the data type and result name
             idxs = [i for i, x in enumerate(for_overwrite) if src_item.fuzzy_match(x) and x.data_type not in ['pipes', 'pits']]
-            if not idxs:  # just grab the first one that isn't pipes or pits
-                idxs = [i for i, x in enumerate(for_overwrite) if x.data_type not in ['pipes', 'pits']]
+            if not idxs:
+                if not colours_retained and src_item.sel_type != 'drawn':  # grab the first that is not pipes or pits
+                    idxs = [i for i, x in enumerate(for_overwrite) if x.data_type not in ['pipes', 'pits']]
+                else:
+                    # we need to retain the same colour for the same geometry
+                    colours = [v for k, v in colours_retained.items() if k.geom == src_item.geom]
+                    if colours:
+                        avail = [x for x in for_overwrite if x.colour in colours]
+                    else:
+                        avail = [x for x in for_overwrite if x.colour not in list(colours_retained.values())]
+                    idxs = [i for i, x in enumerate(avail) if x.data_type not in ['pipes', 'pits']]
+                    if not idxs:
+                        return False
 
         idxs = sorted(idxs, key=lambda x: for_overwrite[x].branch if for_overwrite[x].branch_count > 1 else 999)
         idx = idxs[src_item.branch] if len(idxs) > src_item.branch else (idxs[0] if idxs else None)
@@ -144,7 +155,7 @@ class SectionPlotWidget(TVPlotWidget, SectionPlotHelperMixin):
 
         item_for_overwrite = for_overwrite.pop(idx)
         plot_item = self.item_2_curve(item_for_overwrite, self.plot_graph)
-        colours_retained.add(item_for_overwrite.colour)
+        colours_retained[src_item] = item_for_overwrite.colour
         src_item.colour = item_for_overwrite.colour
         plot_item.setData(x=src_item.xdata, y=src_item.ydata, name=src_item.label)
         plot_item.src_item = src_item

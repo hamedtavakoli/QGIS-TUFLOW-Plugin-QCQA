@@ -10,9 +10,9 @@ from ..plotsourceitem import PlotSourceItem
 from .plot_helper_mixin import PlotHelperMixin
 
 if not QSettings().value('TUFLOW/TestCase', False, type=bool):
-    from .....pt.pytuflow import misc
+    from .....pt.pytuflow import misc, INFO
 else:
-    from tuflow.pt.pytuflow import misc
+    from tuflow.pt.pytuflow import misc, INFO
 
 import logging
 logger = logging.getLogger('tuflow_viewer')
@@ -26,6 +26,19 @@ class SectionPlotHelperMixin(PlotHelperMixin):
         data_type, avg_method = self._split_depth_averaging(src_item.data_type)
         if data_type not in output.data_types('section'):
             return
+        if src_item.output.LAYER_TYPE != 'Surface':
+            if output.DRIVER_NAME == 'Flood Modeller':
+                loc = output._id_to_uid(src_item.loc)
+                if loc not in output.ids(src_item.domain):
+                    return
+            else:
+                if isinstance(src_item.loc, list):
+                    for loc in src_item.loc:
+                         if loc not in output.ids(src_item.domain):
+                             return
+                else:
+                    if src_item.loc not in output.ids(src_item.domain):
+                        return
 
         src_item.averaging_method = avg_method
         src_item.data_type = data_type
@@ -55,6 +68,12 @@ class SectionPlotHelperMixin(PlotHelperMixin):
             df = output.section(location, data_type, time, averaging_method=avg_method)
         except (ValueError, IndexError) as e:
             logger.info(f'pytuflow failed to plot section: {e}')
+            if isinstance(output, INFO) and 'Could not find a connection' in str(e):
+                logger.warning(
+                    'Could not find a connection between channels. '
+                    'If trying to plot multiple long sections, use multiple plots.The Section plot '
+                    'only supports a single channel long section'
+                )
             return
         finally:
             profiler('Section - pytuflow::section()')

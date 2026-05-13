@@ -14,13 +14,15 @@ from qgis.gui import QgsVertexMarker, QgsRubberBand
 from .stubs.qgis_stubs import QGIS  # import so that it's initialised
 from ._utils import get_dataset_path, add_result_to_viewer, add_results_to_viewer, TuflowViewerTestCase
 from tuflow.tuflow_viewer_v2.fmts import (XMDF, TPC, BCTablesCheck, NCMesh, DAT, FMTS, DATCrossSections, CATCHJson,
-                                          NCGrid, GPKG1D)
+                                          NCGrid, GPKG1D, GPKG2D)
 from tuflow.tuflow_viewer_v2.widgets.tv_plot_widget.time_series_plot_widget import TimeSeriesPlotWidget
 from tuflow.tuflow_viewer_v2.widgets.plot_window import PlotWindow
 from tuflow.tuflow_viewer_v2.tvinstance import get_viewer_instance
 from tuflow.tuflow_viewer_v2.widgets.tv_plot_widget.pyqtgraph_subclass.tuflow_viewer_curve import TuflowViewerCurve
 
 from tuflow.tuflow_viewer_v2.temporal_controller_widget import temporal_controller
+
+from ._custom_log_handler import custom_log_handler
 
 
 class TestPlotsGeneral(TuflowViewerTestCase):
@@ -678,3 +680,102 @@ class TestPlotsGeneral(TuflowViewerTestCase):
             # check the curve has been added to the plot
             curves = [x for x in plot.plot_graph.items() if isinstance(x, TuflowViewerCurve)]
             self.assertEqual(1, len(curves))
+
+    def test_xmdf_multiple_results_multiple_lines(self):
+        p1 = get_dataset_path('EG00_001.xmdf', 'result')
+        p2 = get_dataset_path('EG00_001b.xmdf', 'result')
+        res1 = XMDF(p1)
+        res2 = XMDF(p2, twodm=res1.twodm)
+        with add_results_to_viewer([res1, res2]):
+            plot_window = PlotWindow(get_viewer_instance())
+            plot_window.tabWidget_view1.change_tab_to_section(checked=True, tab_idx=0)  # change first tab to section plot
+            plot = plot_window.tabWidget_view1.widget(0)
+
+            # fake a drawn line to get the plot to populate
+            wl_action = [x for x in plot.toolbar.data_types_menu.actions() if x.text() == 'bed level'][0]
+            wl_action.setChecked(True)
+            line = QgsRubberBand(QGIS.iface.mapCanvas())
+            line.setColor(QColor('#5388c9'))
+            line.setFillColor(QColor('#5388c9'))
+            points = [[293191.1, 6177916.9], [293361.9, 6177941.7]]
+            geom = QgsGeometry.fromPolylineXY([QgsPointXY(x, y) for x, y in points])
+            line.setToGeometry(geom)
+            plot.draw_tool_updated(line, new=True)
+
+            # check the drawn menu item has been updated
+            self.assertEqual(['Clear', 'Item 1'],
+                             [x.text() for x in plot.toolbar.draw_action_menu.actions() if not x.isSeparator()])
+
+            # check the curve has been added to the plot
+            curves = [x for x in plot.plot_graph.items() if isinstance(x, TuflowViewerCurve)]
+            self.assertEqual(2, len(curves))
+            colours = [curve.src_item.colour for curve in curves]
+            self.assertEqual(['#5388c9', '#5388c9'], colours)
+            pen_colours = [x.opts['pen'].color().name() for x in curves]
+            self.assertEqual(sorted(['#5388c9', '#68aafb']), sorted(pen_colours))
+
+            line2 = QgsRubberBand(QGIS.iface.mapCanvas())
+            line2.setColor(QColor('#ffffff'))
+            line2.setFillColor(QColor('#ffffff'))
+            points2 = [[293230.8, 6178242.4], [293369.7, 6178215.9]]
+            geom = QgsGeometry.fromPolylineXY([QgsPointXY(x, y) for x, y in points2])
+            line2.setToGeometry(geom)
+            plot.draw_tool_updated(line2, new=True)
+
+            # check the drawn menu item has been updated
+            self.assertEqual(['Clear', 'Item 1', 'Item 2'],
+                             [x.text() for x in plot.toolbar.draw_action_menu.actions() if not x.isSeparator()])
+
+            # check the curve has been added to the plot
+            curves = [x for x in plot.plot_graph.items() if isinstance(x, TuflowViewerCurve)]
+            self.assertEqual(4, len(curves))
+
+            line1_items = [x for x in curves if x.src_item.geom == points]
+            line2_items = [x for x in curves if x.src_item.geom == points2]
+            line1_colours = [x.src_item.colour for x in line1_items]
+            line2_colours = [x.src_item.colour for x in line2_items]
+            self.assertEqual(['#5388c9', '#5388c9'], line1_colours)
+            self.assertEqual(['#ffffff', '#ffffff'], line2_colours)
+            pen_colours = [x.opts['pen'].color().name() for x in line1_items]
+            self.assertEqual(sorted(['#5388c9', '#68aafb']), sorted(pen_colours))
+
+            # deselect the first line in the menu
+            actions = [x for x in plot.toolbar.draw_action_menu.actions() if x.text() == 'Item 1']
+            actions[0].setChecked(False)
+
+            curves = [x for x in plot.plot_graph.items() if isinstance(x, TuflowViewerCurve)]
+            self.assertEqual(2, len(curves))
+            colours = [curve.src_item.colour for curve in curves]
+            self.assertEqual(['#ffffff', '#ffffff'], colours)
+
+            actions[0].setChecked(True)
+            curves = [x for x in plot.plot_graph.items() if isinstance(x, TuflowViewerCurve)]
+            line1_items = [x for x in curves if x.src_item.geom == points]
+            pen_colours = [x.opts['pen'].color().name() for x in line1_items]
+            self.assertEqual(sorted(['#5388c9', '#68aafb']), sorted(pen_colours))
+
+            actions[0].setChecked(False)
+            actions[0].setChecked(True)
+            curves = [x for x in plot.plot_graph.items() if isinstance(x, TuflowViewerCurve)]
+            line1_items = [x for x in curves if x.src_item.geom == points]
+            pen_colours = [x.opts['pen'].color().name() for x in line1_items]
+            self.assertEqual(sorted(['#5388c9', '#68aafb']), sorted(pen_colours))
+
+    def test_time_series_multiple(self):
+        p1 = get_dataset_path('EG15_001_TS_1D.gpkg', 'result')
+        p2 = get_dataset_path('EG15_001_TS_2D.gpkg', 'result')
+        res1 = GPKG1D(p1)
+        res2 = GPKG2D(p2)
+        with add_results_to_viewer([res1, res2]):
+            plot_window = PlotWindow(get_viewer_instance())
+            plot = plot_window.tabWidget_view1.widget(0)  # first plot tab within the plot window (default is time-series)
+
+            plot.toggle_selection_tool(True)
+            q_action = [x for x in plot.toolbar.data_types_menu.actions() if x.text() == 'flow'][0]
+            q_action.setChecked(True)
+            lyr = [x for x in res1.map_layers() if '1D_L' in x.name()][0]
+            QGIS.iface.setActiveLayer(lyr)
+            ch = list(lyr.getFeatures('"ID" = \'Pipe10\''))[0]
+            with custom_log_handler.catch_with_filter(['Location "Pipe10/channel" not found in the output or a valid location filter - removing.']):
+                lyr.selectByIds([ch.id()])
+                self.assertEqual(0, custom_log_handler.msg_count)

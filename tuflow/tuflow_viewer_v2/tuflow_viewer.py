@@ -177,11 +177,11 @@ class TuflowViewer(QObject):
             # noinspection PyUnresolvedReferences
             try:
                 self.iface.unregisterCustomDropHandler(self._drop_handler)
-            except (RuntimeError, TypeError):
+            except Exception:
                 pass
             try:
                 self.iface.mapCanvas().mapToolSet.disconnect(self._map_tool_changed)
-            except (RuntimeError, TypeError):
+            except Exception:
                 pass
             try:
                 self.iface.layerTreeView().viewport().removeEventFilter(self.context_menu_filter)
@@ -201,30 +201,39 @@ class TuflowViewer(QObject):
             pass
 
         # unregister context menu handler
-        self._ctx_menu_handler.unregister_menu()
+        try:
+            self._ctx_menu_handler.unregister_menu()
+        except Exception:
+            pass
 
         # plot window
         try:
             self._action_plot_window.triggered.disconnect(self._create_plot_window)
-        except (RuntimeError, TypeError):
+        except Exception:
             pass
-        self.iface.pluginToolBar().removeAction(self._action_plot_window)
+        try:
+            self.iface.pluginToolBar().removeAction(self._action_plot_window)
+        except Exception:
+            pass
         for id_, w in self._plot_windows.copy().items():
-            w.close()
-            self._plot_windows.pop(id_)
+            try:
+                w.close()
+                self._plot_windows.pop(id_)
+            except Exception:
+                pass
 
         # signals
         try:
             QgsProject.instance().layersAdded.disconnect(self._on_layers_added)
-        except (RuntimeError, TypeError):
+        except Exception:
             pass
         try:
             QgsProject.instance().layersWillBeRemoved.disconnect(self._on_layers_will_be_removed)
-        except (RuntimeError, TypeError):
+        except Exception:
             pass
         try:
             QgsProject.instance().readProject.disconnect(self._read_project)
-        except (RuntimeError, TypeError):
+        except Exception:
             pass
 
     def set_theme(self, theme_name: str):

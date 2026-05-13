@@ -44,6 +44,13 @@ class CurtainPlotHelperMixin(PlotHelperMixin):
         data_type, _ = self._split_depth_averaging(src_item.data_type)
         if data_type not in output.data_types('section'):
             return
+        if src_item.output.LAYER_TYPE != 'Surface':
+            try:
+                output._complete_load()
+            except AttributeError:
+                pass
+            if src_item.loc not in output.ids(src_item.domain):
+                return
 
         src_item.data_type = data_type
         location = src_item.geom if src_item.output.LAYER_TYPE == 'Surface' else src_item.loc

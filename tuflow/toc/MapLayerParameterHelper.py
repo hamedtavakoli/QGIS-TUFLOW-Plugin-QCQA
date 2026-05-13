@@ -25,6 +25,8 @@ class MapLayerParameterHelper:
         self.mapLayerFilter = layerFilter
 
     def refreshLayers(self):
+        if len(self.mapLayerNamesIds) > 0:
+            return
         self.mapLayerNamesIds = findAllVectorLyrsWithGroups()
         if self.mapLayerType is not None:
             temp = []
@@ -57,3 +59,13 @@ class MapLayerParameterHelper:
     def getLayersFromIndices(self, indices: list[int]) -> list[QgsMapLayer]:
         filtered_list = [self.mapLayerNamesIds[i] for i in indices]
         return [tuflowqgis_find_layer(x[1], search_type='layerid') for x in filtered_list]
+
+    def findLayerIdFromName(self, name: str) -> int or None:
+        for i, (layer_name, layer_id) in enumerate(self.mapLayerNamesIds):
+            if name == layer_name:
+                return layer_id
+        return None
+
+    def getLayersFromNames(self, names: list[str]) -> list[QgsMapLayer]:
+        id_list = [self.findLayerIdFromName(name) for name in names]
+        return [tuflowqgis_find_layer(x, search_type='layerid') for x in id_list]

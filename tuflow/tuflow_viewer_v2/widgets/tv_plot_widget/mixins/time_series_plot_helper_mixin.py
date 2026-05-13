@@ -45,7 +45,13 @@ class TimeSeriesPlotHelperMixin(PlotHelperMixin):
             location = src_item.geom
         else:
             location = f'{src_item.loc}/{src_item.domain}'
-
+            if output.DRIVER_NAME == 'Flood Modeller':
+                loc = output._id_to_uid(src_item.loc)
+                if loc not in output.ids(src_item.domain):
+                    return
+            else:
+                if src_item.loc not in output.ids(src_item.domain):
+                    return
 
         src_item.feedback_context = 'static'
         src_item.xaxis_name = 'time'

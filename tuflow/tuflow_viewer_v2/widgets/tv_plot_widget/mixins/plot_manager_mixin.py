@@ -24,6 +24,9 @@ if typing.TYPE_CHECKING:
     from ..pyqtgraph_subclass.custom_plot_widget import CustomPlotWidget
     from qgis.gui import QgsMapCanvasItem
 
+import logging
+logger = logging.getLogger('tuflow_viewer')
+
 
 class PlotManagerMixin:
     """Handles adding/removing items on the plot,
@@ -136,6 +139,12 @@ class PlotManagerMixin:
                     for sel1 in self._selection:
                         if sel1.id == sel.id or not is_long_section_channel(sel1):
                             continue
+                        sel1_lyr = QgsProject.instance().mapLayer(sel1.lyrid)
+                        if sel1_lyr != sel_lyr:
+                            logger.warning(
+                                'Section plots only support a single channel long section. '
+                                'If trying to plot multiple long sections, use multiple plots.'
+                            )
                         id1 = sel1.id.split('::', 2)[1]
                         ids = [ids] + [id1] if not isinstance(ids, list) else ids + [id1]
                 elif is_long_section_channel(sel) and channel_used:
@@ -197,6 +206,10 @@ class PlotManagerMixin:
         plot_item = [x for x in plot_graph.items() if isinstance(x, TuflowViewerCurve) and x.src_item.id == item.id]
         if item.data_type in ['pipes', 'pits']:
             plot_item = [x for x in plot_item if x.channel_ids == item.channel_ids]
+        if len(plot_item) > 1:
+            plot_item_ = [x for x in plot_item if x.geom == item.geom]
+            if plot_item_:
+                plot_item = plot_item_
         if plot_item:
             return plot_item[0]
         return None
