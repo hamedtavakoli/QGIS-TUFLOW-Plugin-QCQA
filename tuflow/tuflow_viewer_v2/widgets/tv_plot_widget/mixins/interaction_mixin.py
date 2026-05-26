@@ -242,6 +242,7 @@ class InteractionMixin:
                     curve_item = item
 
         if plot_item is None:
+            self.update_qgis_static_feedback(None)
             QToolTip.hideText()
             self.setToolTip('')
 

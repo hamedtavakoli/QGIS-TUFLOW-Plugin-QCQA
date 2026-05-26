@@ -651,3 +651,11 @@ class TestFmts(TuflowViewerTestCase):
             self.assertTrue(lyr.isValid())
             if lyr.name().endswith('_pts'):
                 self.assertTrue(lyr.featureCount() > 0)
+
+    def test_nc_mesh_variable_bed_level(self):
+        p1 = get_dataset_path('FMA2_SED_001.nc', 'result')
+        res = NCMesh(p1)
+        data_types = res.data_types('timeseries')
+        self.assertIn('dynamic bed level', data_types)
+        self.assertEqual(10, len(data_types))
+        self.assertNotIn('', data_types)

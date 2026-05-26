@@ -48,11 +48,11 @@ class HoverableBaseClass(TuflowViewerCurve):
         self.active_channel_curve = None
 
     def set_hover_visible(self, vis: bool):
-        if not self.hover_local_pos or not vis:
+        if self.hover_local_pos is None or not vis:
             self.hoverItem.setVisible(False)
         if vis and self.hover_pos:
             self.showTooltip()
-            if self.hover_local_pos:
+            if self.hover_local_pos is not None:
                 self.hoverItem.setPointsVisible(self.hoverItem_mask)
                 self.hoverItem.setVisible(True)
         elif not vis and self.active_channel_curve:
@@ -92,8 +92,8 @@ class HoverableBaseClass(TuflowViewerCurve):
             if min_idx is not None:
                 self.hoverItem_mask[min_idx] = True
 
-            if self._p:
-                if self.active_channel_curve:
+            if self._p is not None:
+                if self.active_channel_curve is not None:
                     self.active_channel_curve.set_visible(False)
                     self.active_channel_curve = None
                 self.hover_pos = self.getViewWidget().mapToGlobal(self.mapToDevice(self._p).toPoint())

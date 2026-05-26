@@ -3513,10 +3513,11 @@ class ResData():
 						self.Types.append('2D Region Volume')
 						try:
 							chk_nLocs = int(dat_type[indA+1:indB])
-							if (chk_nLocs != self.Data_2D.Vol.nLocs):
-								message = 'ERROR - number of locations in .csv doesn''t match value in .tpc'
-								error = True
-								return error, message
+							# remove this - there's an error in tuflow quadtree maybe that reports the number wrong
+							# if (chk_nLocs != self.Data_2D.Vol.nLocs):
+							# 	message = 'ERROR - number of locations in .csv doesn''t match value in .tpc'
+								# error = True
+								# return error, message
 						except:
 							print('WARNING - Unable to extact number of values in .tpc file entry')
 				elif self.resFileFormat == "NC":

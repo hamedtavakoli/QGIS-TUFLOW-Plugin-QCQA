@@ -1,5 +1,6 @@
 from qgis.PyQt.QtWidgets import QToolBar, QComboBox, QWidget, QLabel, QHBoxLayout, QMenu
 from qgis.PyQt.QtCore import QSize, pyqtSignal, QSettings
+from qgis.PyQt.QtGui import QIcon
 
 from qgis.core import QgsApplication
 from qgis.gui import QgsMapCanvasItem
@@ -47,6 +48,8 @@ class TVPlotToolBar(QToolBar):
         super().__init__(parent)
         self.setIconSize(QSize(16, 16))
 
+        viewer_instance = get_viewer_instance()
+
         # layer selection
         self.selection_action = QAction(QgsApplication.getThemeIcon('mActionSelectRectangle.svg'), 'Selection', self)
         self.selection_action.setCheckable(True)
@@ -65,7 +68,7 @@ class TVPlotToolBar(QToolBar):
         self.addAction(self.selection_action)
 
         # draw menu
-        self.draw_action = QAction(get_viewer_instance().icon('draw'), 'Draw', self)
+        self.draw_action = QAction(viewer_instance.icon('draw') if viewer_instance else QIcon(), 'Draw', self)
         self.draw_action.setCheckable(True)
         self.draw_action.toggled.connect(self.draw_tool_toggled.emit)
         self.draw_action_menu = DrawnItemMenu(self)
@@ -80,7 +83,7 @@ class TVPlotToolBar(QToolBar):
         # result names
         self.active_result_names = []
         self.result_names_menu = MenuButton(
-            get_viewer_instance().icon('layers'),
+            viewer_instance.icon('layers') if viewer_instance else QIcon(),
             'Result Names',
             self,
             persistent_menu=True
@@ -90,7 +93,7 @@ class TVPlotToolBar(QToolBar):
 
         # data types
         self.data_types_menu = MenuButton(
-            get_viewer_instance().icon('selection-filter'),
+            viewer_instance.icon('selection-filter') if viewer_instance else QIcon(),
             'Data Types',
             self,
             persistent_menu=True
@@ -102,12 +105,13 @@ class TVPlotToolBar(QToolBar):
         self.dep_avg_menu.changed.connect(self.data_type_selection_changed.emit)
 
         self.outputs_changed(None)
-        get_viewer_instance().outputs_changed.connect(self.outputs_changed)
-        get_viewer_instance().outputs_removed.connect(self.outputs_removed)
+        if viewer_instance:
+            viewer_instance.outputs_changed.connect(self.outputs_changed)
+            viewer_instance.outputs_removed.connect(self.outputs_removed)
 
         # branch selector - only for section plots, and only visible when the current long plot has multiple branches
         self.branch_selector = BranchSelectorMenu(
-            get_viewer_instance().icon('branch'),
+            viewer_instance.icon('branch') if viewer_instance else QIcon(),
             'Branch Selector',
             self,
             persistent_menu=True
@@ -118,7 +122,9 @@ class TVPlotToolBar(QToolBar):
         self.branch_selector.triggered.connect(self.branch_selection_changed.emit)
 
     def set_theme(self, theme: TuflowViewerTheme):
-        icon = get_viewer_instance().icon
+        if not get_viewer_instance():
+            return
+        icon = get_viewer_instance().icon if get_viewer_instance() else None
         self.draw_action.setIcon(icon('draw'))
         self.result_names_menu.setIcon(icon('layers'))
         self.data_types_menu.setIcon(icon('selection-filter'))
@@ -196,7 +202,7 @@ class TVPlotToolBar(QToolBar):
 
     def outputs_changed(self, output: TuflowViewerOutput = None):
         """output parameter is newly added."""
-        loaded_output_names = get_viewer_instance().result_names()
+        loaded_output_names = get_viewer_instance().result_names() if get_viewer_instance() else []
         previous_count = len(self.active_result_names)
 
         # remove results that were removed from QGIS

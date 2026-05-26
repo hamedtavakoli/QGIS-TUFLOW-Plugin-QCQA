@@ -2,6 +2,7 @@ from uuid import uuid4
 
 from qgis.PyQt.QtWidgets import QWidgetAction, QToolButton, QLabel
 from qgis.PyQt.QtCore import pyqtSignal
+from qgis.PyQt.QtGui import QIcon
 
 from ..menu_action_widget import MenuActionWidget
 from ...tvinstance import get_viewer_instance
@@ -25,7 +26,7 @@ class DepthAverageWidget(MenuActionWidget):
     @staticmethod
     def create_remove_button():
         btn = QToolButton()
-        btn.setIcon(get_viewer_instance().icon('close-ring'))
+        btn.setIcon(get_viewer_instance().icon('close-ring') if get_viewer_instance() else QIcon())
         btn.setText('Remove')
         btn.setToolTip('Remove')
         btn.setAutoRaise(True)

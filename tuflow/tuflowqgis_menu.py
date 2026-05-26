@@ -75,9 +75,12 @@ for f in for_deleting:
     except:
         continue
 
+# copy refh2 pyd to a cache directory
+from .tuflow_plugin_cache import cache_dir
+
 refh2dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ReFH2")
 pyds = glob.glob(os.path.join(refh2dir, "*.pyd"))
-if os.path.exists(os.path.join(refh2dir, 'refh2.py')):
+if os.path.exists(os.path.join(refh2dir, 'refh2.py')):  # non-pyd version of refh2, for testing and development
     try:
         from .ReFH2.refh2 import Refh2Dock
     except ImportError as e:
@@ -94,8 +97,18 @@ elif pyds and sys.platform == 'win32':
         if pyd:
             pyd = pyd[0]
     if pyd:
-        tmpdir = tempfile.mkdtemp(prefix='tuflow_refh2')
-        shutil.copy(pyd, tmpdir)
+        # tmpdir = tempfile.mkdtemp(prefix='tuflow_refh2')
+        tmpdir = cache_dir('refh2')
+        if not tmpdir.exists():
+            tmpdir.mkdir(parents=True)
+        existing_pyd = glob.glob('*.pyd')
+        make_copy = True
+        for f in existing_pyd:
+            if Path(f).name == Path(pyd.name) and os.path.getmtime(f) >= os.path.getmtime(pyd):
+                make_copy = False
+                break
+        if make_copy:
+            shutil.copy(pyd, tmpdir)
         sys.path.append(tmpdir)
         try:
             from refh2 import Refh2Dock

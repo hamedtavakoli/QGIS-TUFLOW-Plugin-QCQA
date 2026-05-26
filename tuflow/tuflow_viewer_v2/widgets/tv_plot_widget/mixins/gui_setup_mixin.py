@@ -11,7 +11,7 @@ from qgis.PyQt.QtGui import QColor
 
 from ..colours import ColourAllocator
 from ....tvinstance import get_viewer_instance
-from ....theme import TuflowViewerTheme
+from ....theme import TuflowViewerTheme, load_theme
 
 if not QSettings().value('TUFLOW/TestCase', False, type=bool):
     from .....compatibility_routines import QT_TAB_FOCUS, QT_PAINTER_ANTIALIASING, QT_STYLE_DOTTED_PEN
@@ -52,7 +52,10 @@ class GuiSetupMixin:
     """
 
     def _init_gui(self: SupportUI):
-        self.palette = get_viewer_instance().theme.palette
+        if get_viewer_instance():
+            self.palette = get_viewer_instance().theme.palette
+        else:
+            self.palette = load_theme('default').palette
         self.setupUi(self)
         self.setFocusPolicy(QT_TAB_FOCUS)
         self.plot_graph.setParent(self)

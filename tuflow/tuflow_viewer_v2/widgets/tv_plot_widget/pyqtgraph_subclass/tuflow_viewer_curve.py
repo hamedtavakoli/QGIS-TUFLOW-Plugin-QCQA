@@ -99,9 +99,11 @@ class TuflowViewerCurve:
 
     def showTooltip(self):
         self.setToolTip(self.hover_text)
+        colour = '#000000'
+        bg_colour = '#ffffff'
         style = 'border: 3px solid {0};' \
-                f'color: {get_viewer_instance().theme.palette.text().color().name()};' \
-                f'background-color: {get_viewer_instance().theme.palette.base().color().name()};' \
+                f'color: {get_viewer_instance().theme.palette.text().color().name() if get_viewer_instance() else colour};' \
+                f'background-color: {get_viewer_instance().theme.palette.base().color().name() if get_viewer_instance() else bg_colour};' \
                 'border-radius: 4px;' \
                 'padding: 2px;'.format(self.hover_colour)
         self.getViewWidget().setStyleSheet('QToolTip { ' + style + '}')

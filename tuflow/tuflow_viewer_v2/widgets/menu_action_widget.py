@@ -25,10 +25,11 @@ class MenuActionWidget(QWidget):
         self.cursor_in_widget = False
         self.setAttribute(QT_WA_STYLED_BACKGROUND, True)
         # self.background_highlight_colour = '#3498db'
-        if get_viewer_instance().theme.theme_name == 'Night Mapping':
-            self.background_highlight_colour = '#008000'  # Qt.darkGreen
-        else:
-            self.background_highlight_colour = get_viewer_instance().theme.palette.highlight().color().name()
+        if get_viewer_instance():
+            if get_viewer_instance().theme.theme_name == 'Night Mapping':
+                self.background_highlight_colour = '#008000'  # Qt.darkGreen
+            else:
+                self.background_highlight_colour = get_viewer_instance().theme.palette.highlight().color().name()
         parent_menu = self.parent()
         if isinstance(parent_menu, QMenu):
             self.parent().aboutToHide.connect(self.reset_highlight)

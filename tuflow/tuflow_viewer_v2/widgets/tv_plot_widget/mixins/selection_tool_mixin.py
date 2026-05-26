@@ -49,6 +49,8 @@ class SelectionToolMixin:
         return iface.actionSelect()
 
     def _init_selection_tool(self: SupportUI):
+        if not self.tv:
+            return
         self.selection_changed.connect(self.update_layer_selection)
         self.clear_feature_selection_requested.connect(self._clear_feature_selection)
         self.selection_map_tool = self.tv.selection_map_tool

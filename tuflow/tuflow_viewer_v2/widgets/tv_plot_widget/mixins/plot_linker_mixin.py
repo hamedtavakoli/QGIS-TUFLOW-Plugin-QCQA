@@ -26,10 +26,11 @@ class PlotLinkerMixin:
         self.plot_linker.setToolTip('Common Axis Linked with Other Plots')
 
         # plot link toggle
-        self.plot_linker.setPixmaps(
-            get_viewer_instance().icon('link').pixmap(16, 16),
-            get_viewer_instance().icon('link-slash').pixmap(16, 16),
-        )
+        if get_viewer_instance():
+            self.plot_linker.setPixmaps(
+                get_viewer_instance().icon('link').pixmap(16, 16),
+                get_viewer_instance().icon('link-slash').pixmap(16, 16),
+            )
         self.plot_linker.setActive(True)
         self.plot_linker.clicked.connect(self.plot_linker_clicked)
 

@@ -22,7 +22,7 @@ class PlotSourceItem:
         self.sel_type = sel_type
         self.static = static
         self.chan_type = chan_type
-        self.output = get_viewer_instance().output(output_id)
+        self.output = get_viewer_instance().output(output_id) if get_viewer_instance() else None
         self.label = ''
         self.averaging_method = None
         self._branch = 0

@@ -94,7 +94,7 @@ class HoverableCurveItem(HoverableBaseClass, PlotCurveItem):
         if ev.isExit():
             return
 
-        if self._p:
+        if self._p is not None:
             self.hover_text = self.src_item.tooltip(self.src_item, self._node_id, (self._p.x(), self._p.y()), is_datetime=self.is_datetime)
         elif channel_curve:
             self.hover_pos = ev.screenPos().toPoint()
