@@ -76,7 +76,7 @@
         <x>0</x>
         <y>0</y>
         <width>797</width>
-        <height>1123</height>
+        <height>1168</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_7">
@@ -5418,6 +5418,19 @@
                  </widget>
                 </item>
                </layout>
+              </item>
+              <item>
+               <widget class="QLabel" name="limb_warning_label">
+                <property name="text">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#cb8700;&quot;&gt;Warning: If adding climate change, &amp;quot;Baseline Change&amp;quot; should be updated to an appropriate value if the catchment uses LIMB data and sub daily durations (see &lt;/span&gt;&lt;a href=&quot;https://wiki.tuflow.com/QGIS_ARR_to_TUFLOW#LIMB_Data_and_Climate_Change&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;TUFLOW Wiki page&lt;/span&gt;&lt;/a&gt;&lt;span style=&quot; color:#cb8700;&quot;&gt;)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
+                <property name="wordWrap">
+                 <bool>true</bool>
+                </property>
+                <property name="openExternalLinks">
+                 <bool>true</bool>
+                </property>
+               </widget>
               </item>
              </layout>
             </widget>
